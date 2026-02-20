@@ -1,0 +1,76 @@
+services:
+  db:
+    image: mysql:8.0-oracle
+    container_name: mysql_db
+    environment:
+      MYSQL_DATABASE: product_comparison_db
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    expose:
+      - "3306"
+    deploy:
+      resources:
+        limits:
+          memory: 160M
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${DB_ROOT_PASSWORD}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command: --performance_schema=OFF --innodb_buffer_pool_size=16M --max_connections=20
+
+  api:
+    build: .
+    container_name: product_comparison_api
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/product_comparison_db
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT=30000
+#      - SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT=60000
+      - SPRING_JPA_SHOW_SQL=false
+      # Security & Flyway safety
+      - SPRING_FLYWAY_CLEAN_DISABLED=true
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      # Actuator & Management
+      - MANAGEMENT_SERVER_PORT=9001
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+      # Resource limits for Java 21 (Optimized for Production tiny VPS)
+      - JAVA_OPTS=-Xmx140m -Xms140m -Xss256k -XX:+UseSerialGC -Xverify:none -XX:TieredStopAtLevel=1
+      # Use this locally
+#      - JAVA_OPTS=-Xmx512m -Xms256m -XX:+UseG1GC
+      # Rate Limiting (Bucket4j)
+      - BUCKET4J_ENABLED=true
+      # Cache refresh time (ms)
+      - APP_CACHE_TTL=60000
+    deploy:
+      resources:
+        limits:
+          memory: 240M
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    deploy:
+      resources:
+        limits:
+          memory: 30M
+
+volumes:
+  caddy_data:
+  caddy_config:

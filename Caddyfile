@@ -1,0 +1,3 @@
+api.andresbonelli.dev {
+    reverse_proxy product_comparison_api:8080
+}
