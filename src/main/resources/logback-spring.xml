@@ -20,20 +20,28 @@
     </appender>
 
     <!-- Application Logger -->
-    <logger name="dev.andresbonelli.productcomparisonapi" level="DEBUG" additivity="false">
+    <logger name="dev.andresbonelli.productcomparisonapi" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
     </logger>
 
-    <!-- Hibernate/JPA Logger (SQL queries) -->
-    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
-        <appender-ref ref="CONSOLE" />
-    </logger>
+    <!-- Profile specific configuration -->
+    <springProfile name="dev">
+        <logger name="dev.andresbonelli.productcomparisonapi" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+        </logger>
 
-    <!-- SQL param Logger -->
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
-        <appender-ref ref="CONSOLE" />
-    </logger>
+        <!-- Hibernate/JPA Logger (SQL queries) -->
+        <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE" />
+        </logger>
+
+        <!-- SQL param Logger -->
+        <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+            <appender-ref ref="CONSOLE" />
+        </logger>
+    </springProfile>
 
     <!-- Spring Framework Logger -->
     <logger name="org.springframework" level="INFO" additivity="false">
