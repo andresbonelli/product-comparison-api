@@ -24,6 +24,15 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: Create Directory on Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          script: mkdir -p ~/app
+
       - name: Copy Root Files (Compose & Dockerfile)
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -53,7 +62,6 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            mkdir -p ~/app
             cd ~/app
             # DANGER: replace with this line to wipe database volume as well
             # docker compose down -v || true
